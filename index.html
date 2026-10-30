@@ -1,0 +1,314 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ciclo de una Infección Viral</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400&family=Ysabeau+Office:wght@400;500;600&display=swap">
+<style>
+/* Layout: una pantalla por etapa, imagen a un lado y texto al otro, como en las diapositivas; banda de etapas arriba y bitácora abajo */
+:root{
+  --bg:#0D0620; --panel:#160c30; --line:#3a2560;
+  --fg:#F1E9F6; --muted:#b9a8cc;
+  --pink:#E3688F; --teal:#5FE0C8;
+  --display:"Unbounded","Trebuchet MS",system-ui,sans-serif;
+  --body:"Ysabeau Office","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px}
+.brand{font-family:var(--display);font-weight:300;font-size:15px;letter-spacing:.04em;color:var(--fg)}
+.brand span{color:var(--pink)}
+.track{display:flex;gap:6px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
+.track li{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:4px 9px;border:1px solid var(--line);white-space:nowrap}
+.track li.done{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 45%,transparent)}
+.track li.now{color:var(--bg);background:var(--teal);border-color:var(--teal)}
+.track li.now.bad{background:var(--pink);border-color:var(--pink)}
+
+.stage{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);min-height:600px;background:var(--bg);border:1px solid var(--line)}
+.stage.flip{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+.stage.flip .pic{order:2}
+.pic{position:relative;overflow:hidden;min-height:220px;background:var(--panel)}
+.pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:none;transition:transform 8s ease-out}
+.stage:hover .pic img{transform:scale(1.04)}
+.content{display:flex;flex-direction:column;gap:20px;padding:44px 44px 36px;min-width:0}
+.eyebrow{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600}
+.eyebrow.bad{color:var(--pink)}
+h1{font-family:var(--display);font-weight:300;font-size:clamp(26px,3.2vw,38px);line-height:1.15;margin:0;text-wrap:balance;color:var(--fg)}
+h1.bad{color:var(--pink)}
+.body{max-width:62ch;display:grid;gap:12px;color:var(--fg)}
+.body p{margin:0}
+.body p.q{font-weight:600;color:var(--fg)}
+.opts{display:grid;gap:12px;margin-top:auto;padding-top:8px}
+.opt{display:flex;gap:14px;align-items:flex-start;text-align:left;width:100%;background:var(--bg);color:var(--pink);
+  border:1px solid var(--pink);padding:14px 18px;font:inherit;font-size:16px;line-height:1.4;cursor:pointer;transition:background .2s,color .2s}
+.opt .k{font-family:var(--display);font-size:12px;border:1px solid currentColor;min-width:22px;height:22px;display:grid;place-items:center;margin-top:1px;flex:none}
+.opt:hover{background:var(--pink);color:var(--bg)}
+.opt:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+.opt.back{color:var(--muted);border-color:var(--line)}
+.opt.back:hover{background:var(--line);color:var(--fg)}
+
+.log{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px}
+.log h2{font-family:var(--display);font-weight:300;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0;color:var(--muted)}
+.log ol{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.log li{font-size:13px;padding:3px 9px;border:1px solid var(--line);color:var(--muted)}
+.log li.bad{color:var(--pink);border-color:color-mix(in srgb,var(--pink) 50%,transparent)}
+.log li.ok{color:var(--teal);border-color:color-mix(in srgb,var(--teal) 40%,transparent)}
+.summary{border:1px solid color-mix(in srgb,var(--teal) 50%,transparent);padding:16px 18px;display:grid;gap:8px;max-width:62ch}
+.summary strong{font-family:var(--display);font-weight:400;color:var(--teal);font-size:15px}
+.summary ul{margin:0;padding-left:18px;color:var(--muted);font-size:15px}
+.hint{font-size:13px;color:var(--muted)}
+
+[hidden]{display:none!important}
+/* glosario */
+.hdr-l{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.gbtn{font:inherit;font-size:13px;letter-spacing:.08em;text-transform:uppercase;background:var(--bg);color:var(--teal);border:1px solid var(--teal);padding:5px 12px;cursor:pointer}
+.gbtn:hover{background:var(--teal);color:var(--bg)}
+.gbtn:focus-visible,.term:focus-visible,.gclose:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.term{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline dotted var(--teal);text-decoration-thickness:1.5px;text-underline-offset:4px}
+.term:hover{color:var(--teal)}
+.scrim{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 70%,transparent);z-index:20}
+.gpanel{box-sizing:border-box;position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);z-index:21;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;
+  padding:calc(20px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) 20px}
+.ghead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ghead h2{font-family:var(--display);font-weight:300;font-size:20px;margin:0;color:var(--fg)}
+.gclose{font:inherit;font-size:14px;background:none;color:var(--muted);border:1px solid var(--line);padding:4px 10px;cursor:pointer}
+.gclose:hover{color:var(--fg);border-color:var(--muted)}
+.gsearch{margin:14px 0 6px;width:100%;box-sizing:border-box;font:inherit;font-size:16px;background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:9px 12px}
+.gsearch:focus{outline:none;border-color:var(--teal)}
+.gcount{font-size:12px;color:var(--muted);margin:0 0 8px}
+.glist{list-style:none;margin:0;padding:0 4px 0 0;overflow-y:auto;display:grid;gap:4px}
+.glist li{padding:10px 12px;border:1px solid transparent}
+.glist li.hit{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 8%,transparent)}
+.glist dt{font-weight:600;color:var(--teal);margin:0 0 3px}
+.glist dd{margin:0;font-size:15px;line-height:1.5;color:var(--fg)}
+.gempty{color:var(--muted);font-size:15px;padding:10px 12px}
+
+.fade{animation:in .45s ease-out both}
+@keyframes in{from{opacity:.25;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.fade{animation:none}.pic img{transition:none}}
+
+@media (max-width:820px){
+  .stage,.stage.flip{grid-template-columns:minmax(0,1fr);min-height:0}
+  .stage.flip .pic{order:0}
+  .pic{height:200px;min-height:0}
+  .content{padding:26px 20px 24px}
+  body{font-size:16px}
+  .track li{font-size:11px;padding:3px 7px}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="hdr-l"><div class="brand">Ciclo de una <span>Infección Viral</span></div><button class="gbtn" id="gopen" type="button" aria-haspopup="dialog">Glosario</button></div>
+    <ol class="track" id="track" aria-label="Etapas del ciclo"></ol>
+  </header>
+  <main class="stage" id="stage" aria-live="polite">
+    <div class="pic"><img id="pic" alt=""></div>
+    <div class="content" id="content"></div>
+  </main>
+  <section class="log" aria-label="Bitácora del recorrido">
+    <h2>Bitácora del recorrido</h2>
+    <ol id="log"></ol>
+    <p class="hint">Podés responder con el mouse o con las teclas 1 y 2. Las palabras subrayadas con puntos tienen su definición en el glosario.</p>
+  </section>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="gpanel" id="gpanel" role="dialog" aria-modal="true" aria-labelledby="gtitle" hidden>
+  <div class="ghead"><h2 id="gtitle">Glosario</h2><button class="gclose" id="gclose" type="button">Cerrar</button></div>
+  <label for="gsearch" class="gcount" style="margin-top:12px">Buscar un término</label>
+  <input class="gsearch" id="gsearch" type="search" autocomplete="off" placeholder="Por ejemplo, endosoma">
+  <p class="gcount" id="gcount"></p>
+  <ul class="glist" id="glist"></ul>
+</aside>
+
+<script>
+const GLOSS = [
+ {id:"acido-sialico", t:"Ácido siálico", m:["ácido siálico"], d:"Monosacárido con carga negativa ubicado en el extremo de las cadenas de oligosacáridos de glicoproteínas y glicolípidos. En la vía respiratoria es el receptor al que se une la hemaglutinina del virus de influenza."},
+ {id:"apical", t:"Membrana apical", m:["membrana plasmática apical","membrana apical"], d:"Región de la membrana plasmática de una célula epitelial orientada hacia la luz del órgano, en este caso hacia la luz de la vía aérea. Se diferencia de la membrana basolateral, que está en contacto con las células vecinas y la lámina basal."},
+ {id:"apoptosis", t:"Apoptosis", m:["apoptosis"], d:"Muerte celular regulada por un conjunto de proteínas propias de la célula. Se caracteriza por la condensación de la cromatina, la fragmentación del ADN y la formación de cuerpos apoptóticos, sin liberación del contenido celular al medio."},
+ {id:"arnc", t:"ARNc", m:["ARNc","polaridad positiva"], cs:true, d:"Copia completa, de polaridad positiva, de cada segmento del genoma viral. Sirve como molde para la síntesis de nuevos ARN genómicos de polaridad negativa."},
+ {id:"atp", t:"ATP", m:["ATP"], cs:true, d:"Adenosín trifosfato. Nucleótido cuya hidrólisis libera energía utilizada en numerosas reacciones celulares. Se sintetiza principalmente en las mitocondrias y está disponible en el citosol."},
+ {id:"barrido", t:"Barrido mucociliar", m:["barrido mucociliar"], d:"Desplazamiento continuo del moco de las vías respiratorias hacia la faringe, producido por el batido coordinado de las cilias del epitelio. Arrastra partículas, microorganismos y virus retenidos en el moco."},
+ {id:"bicapa", t:"Bicapa lipídica", m:["bicapa lipídica"], d:"Estructura básica de las membranas biológicas, formada por dos capas de lípidos anfipáticos con las cabezas polares hacia el medio acuoso y las colas hidrofóbicas hacia el interior."},
+ {id:"cap", t:"Cap (casquete 5')", m:["con cap"], d:"Nucleótido modificado (7-metilguanosina) unido al extremo 5' de los ARNm eucariotas. Participa en la exportación del ARNm desde el núcleo, en su estabilidad y en el inicio de la traducción."},
+ {id:"cap-snatching", t:"Cap-snatching", m:["cap-snatching"], d:"Mecanismo de transcripción del virus de influenza. La polimerasa viral se une al cap de pre-ARNm de la célula y corta un fragmento de 10 a 13 nucleótidos, que actúa como cebador en la síntesis de los ARNm virales. Por eso los ARNm virales llevan un cap de origen celular."},
+ {id:"cebador", t:"Cebador", m:["cebador"], d:"Segmento corto de ácido nucleico a partir del cual una polimerasa agrega nucleótidos y extiende una nueva cadena."},
+ {id:"cilias", t:"Cilias", m:["cilias"], d:"Proyecciones móviles de la membrana plasmática sostenidas por microtúbulos (axonema). En el epitelio respiratorio baten de manera coordinada y desplazan el moco."},
+ {id:"ciclo-litico", t:"Ciclo lítico", m:["ciclo lítico"], d:"Ciclo de replicación viral que termina con la ruptura (lisis) de la célula hospedadora y la liberación simultánea de los viriones. Es característico, por ejemplo, de muchos bacteriófagos. El virus de influenza, en cambio, sale por gemación."},
+ {id:"citosol", t:"Citosol", m:["citosol"], d:"Fase acuosa del citoplasma, sin contar los organelos. Contiene iones, metabolitos como el ATP, enzimas y el citoesqueleto."},
+ {id:"citoplasma", t:"Citoplasma", m:["citoplasma"], d:"Contenido celular comprendido entre la membrana plasmática y la envoltura nuclear. Incluye el citosol y los organelos."},
+ {id:"clatrina", t:"Clatrina", m:["clatrina"], d:"Proteína que forma un revestimiento en la cara citoplasmática de la membrana durante la formación de vesículas en la endocitosis mediada por receptor."},
+ {id:"cloruro", t:"Cloruro de amonio", m:["cloruro de amonio"], d:"Base débil que se acumula en compartimientos ácidos y eleva su pH. En el laboratorio se utiliza para estudiar procesos que dependen de la acidificación de endosomas y lisosomas."},
+ {id:"conformacion", t:"Cambio de conformación", m:["cambio de conformación","cambia de conformación"], d:"Modificación de la estructura tridimensional de una proteína. Puede producirse, por ejemplo, por un cambio de pH o por la unión de otra molécula, y modifica la actividad de la proteína."},
+ {id:"endocitosis", t:"Endocitosis", m:["endocitosis"], d:"Incorporación de material extracelular a la célula mediante la invaginación de la membrana plasmática y la formación de una vesícula intracelular."},
+ {id:"endosoma", t:"Endosoma", m:["endosoma temprano","endosoma tardío","endosomal","endosoma"], d:"Compartimiento membranoso que recibe el material incorporado por endocitosis. El endosoma temprano madura a endosoma tardío, y en ese proceso su interior se vuelve más ácido (de pH cercano a 6 a pH cercano a 5)."},
+ {id:"envoltura", t:"Envoltura viral", m:["envoltura viral","envoltura"], d:"Bicapa lipídica que rodea a algunos virus, entre ellos el de influenza. Proviene de la membrana de la célula hospedadora y contiene glicoproteínas virales insertas."},
+ {id:"epitelio", t:"Epitelio respiratorio", m:["epitelio respiratorio","epitelio"], d:"Tejido que reviste la tráquea y los bronquios. Está formado principalmente por células ciliadas y por células caliciformes, que secretan moco."},
+ {id:"escision", t:"Escisión", m:["escisión"], d:"Separación de una vesícula o una yema de la membrana de la que se origina, por estrangulamiento y fusión de la membrana en su base."},
+ {id:"gemacion", t:"Gemación", m:["gemación","yema"], d:"Salida de los viriones envueltos desde la célula. La membrana plasmática se curva hacia afuera alrededor de los componentes virales y forma una yema, que luego se separa. La célula no se rompe en este proceso."},
+ {id:"genoma", t:"Genoma", m:["genoma","genomas"], d:"Conjunto completo del material genético de un organismo o de un virus. En influenza A está formado por 8 segmentos de ARN."},
+ {id:"glico", t:"Glicoproteínas y glicolípidos", m:["glicoproteínas","glicolípidos"], d:"Proteínas y lípidos con cadenas de oligosacáridos unidas de manera covalente. En la membrana plasmática, esas cadenas se ubican en la cara externa."},
+ {id:"glicosilacion", t:"Glicosilación", m:["glicosilan"], d:"Adición enzimática de oligosacáridos a proteínas o lípidos. En las proteínas de membrana y de secreción comienza en el retículo endoplasmático y se modifica en el aparato de Golgi."},
+ {id:"golgi", t:"Aparato de Golgi", m:["aparato de Golgi","Golgi"], d:"Organelo formado por cisternas membranosas apiladas. Recibe proteínas del retículo endoplasmático, modifica sus oligosacáridos y las clasifica hacia la membrana plasmática, los lisosomas o la secreción."},
+ {id:"ha", t:"Hemaglutinina (HA)", m:["hemaglutinina","HA"], cs:true, d:"Glicoproteína de la envoltura del virus de influenza, organizada en trímeros. Se une al ácido siálico de la célula y, a pH ácido, cambia de conformación y media la fusión entre la envoltura viral y la membrana del endosoma."},
+ {id:"hidrolasas", t:"Hidrolasas lisosomales", m:["hidrolasas lisosomales"], d:"Enzimas de los lisosomas (proteasas, nucleasas, lipasas, glicosidasas, entre otras) que degradan macromoléculas por hidrólisis. Tienen su máxima actividad a pH ácido."},
+ {id:"hidrolisis", t:"Hidrólisis", m:["hidroliza","hidrólisis"], d:"Reacción en la que un enlace químico se rompe por la incorporación de una molécula de agua."},
+ {id:"iga", t:"IgA secretoria", m:["IgA secretoria","IgA"], cs:true, d:"Forma de la inmunoglobulina A presente en las secreciones de las mucosas, como el moco respiratorio. Se une a antígenos, por ejemplo a glicoproteínas virales, y puede neutralizarlos."},
+ {id:"importinas", t:"Importinas", m:["importinas"], d:"Proteínas que se unen a las señales de localización nuclear y median el transporte de proteínas desde el citoplasma hacia el núcleo a través del poro nuclear."},
+ {id:"influenza", t:"Influenza A", m:["influenza A","influenza"], d:"Virus con envoltura que causa la gripe. Su genoma es ARN de polaridad negativa dividido en 8 segmentos, y se replica en el núcleo de la célula hospedadora."},
+ {id:"lisosoma", t:"Lisosoma", m:["lisosoma"], d:"Organelo delimitado por membrana, con interior ácido (pH cercano a 5), que contiene hidrolasas. Degrada material proveniente de la endocitosis y de la propia célula."},
+ {id:"m1", t:"Proteína de matriz M1", m:["proteína de matriz M1","M1"], cs:true, d:"Proteína del virus de influenza ubicada por debajo de la envoltura. Interactúa con la membrana y con las vRNP, y participa en el ensamblaje de nuevos viriones."},
+ {id:"m2", t:"Canal iónico M2", m:["canal iónico M2","M2"], cs:true, d:"Proteína de la envoltura del virus de influenza que forma un canal de protones. Permite la entrada de H⁺ al interior del virión en el endosoma y participa en la escisión de la yema durante la gemación."},
+ {id:"macropinocitosis", t:"Macropinocitosis", m:["macropinocitosis"], d:"Tipo de endocitosis en el que proyecciones de la membrana plasmática rodean un volumen grande de líquido extracelular y forman vesículas de gran tamaño."},
+ {id:"microscopia", t:"Microscopía de fluorescencia", m:["microscopía de fluorescencia"], d:"Técnica que detecta moléculas marcadas con sustancias fluorescentes. Al iluminarlas con luz de una longitud de onda determinada, emiten luz de otra longitud de onda que se registra en el microscopio."},
+ {id:"mitocondria", t:"Mitocondria", m:["mitocondrias"], d:"Organelo con doble membrana donde ocurren la respiración celular y la mayor parte de la síntesis de ATP. Posee ADN y ribosomas propios."},
+ {id:"mucinas", t:"Mucinas", m:["mucinas"], d:"Glicoproteínas de gran tamaño y muy glicosiladas que forman el componente principal del moco. Muchas de sus cadenas de oligosacáridos terminan en ácido siálico."},
+ {id:"na", t:"Neuraminidasa (NA)", m:["neuraminidasa","NA"], cs:true, d:"Enzima de la envoltura del virus de influenza que hidroliza el enlace del ácido siálico terminal de glicoproteínas y glicolípidos. Interviene en el paso del virión a través del moco y en la liberación de los nuevos viriones."},
+ {id:"nep", t:"NEP", m:["NEP"], cs:true, d:"Proteína de exportación nuclear del virus de influenza (también llamada NS2). Participa en la salida de las vRNP desde el núcleo hacia el citoplasma."},
+ {id:"neutralizar", t:"Neutralización", m:["neutraliza","neutralizado"], d:"Unión de anticuerpos a un virión que impide que infecte células, por ejemplo porque bloquea la unión de sus glicoproteínas a los receptores. En el caso del cloruro de amonio, neutralizar se usa en sentido químico, como elevación del pH."},
+ {id:"np", t:"Nucleoproteína (NP)", m:["nucleoproteína","NP"], cs:true, d:"Proteína del virus de influenza que recubre el ARN genómico en las vRNP. Posee señales de localización nuclear."},
+ {id:"pegl", t:"Péptido de fusión", m:["péptido de fusión"], d:"Segmento hidrofóbico de la HA que queda expuesto tras el cambio de conformación a pH ácido y se inserta en la membrana del endosoma. Es necesario para la fusión de membranas."},
+ {id:"ph", t:"pH", m:["pH"], cs:true, d:"Medida de la concentración de protones (H⁺) de una solución. Cuanto menor es el pH, mayor es la acidez."},
+ {id:"polaridad", t:"Polaridad negativa", m:["polaridad negativa"], d:"Característica de un ARN cuya secuencia es complementaria a la del ARNm. No puede traducirse directamente, sino que primero debe transcribirse a ARN de polaridad positiva."},
+ {id:"polimerasa", t:"ARN polimerasa viral", m:["ARN polimerasa viral","polimerasa viral","polimerasa"], d:"Enzima codificada por el virus, formada por las subunidades PB1, PB2 y PA, que sintetiza ARN a partir de un molde de ARN. La célula no posee una enzima con esa actividad, por lo que el virión la lleva asociada a cada vRNP."},
+ {id:"poro", t:"Complejo del poro nuclear", m:["complejos del poro nuclear"], d:"Estructura proteica que atraviesa la envoltura nuclear y regula el intercambio de moléculas entre el núcleo y el citoplasma."},
+ {id:"pre-arnm", t:"Pre-ARNm", m:["pre-ARNm"], d:"Transcripto primario de un gen eucariota, antes de completar su procesamiento en el núcleo."},
+ {id:"re", t:"Retículo endoplasmático", m:["retículo endoplasmático","RE"], cs:true, d:"Red de membranas que se continúa con la envoltura nuclear. En su región rugosa, con ribosomas asociados, se sintetizan las proteínas de membrana y de secreción, que allí comienzan a glicosilarse."},
+ {id:"ribosomas", t:"Ribosomas", m:["ribosomas"], d:"Complejos de ARN ribosómico y proteínas donde ocurre la traducción del ARNm a proteína. Pueden estar libres en el citosol o asociados al retículo endoplasmático."},
+ {id:"nls", t:"Señal de localización nuclear", m:["señales de localización nuclear"], d:"Secuencia corta de aminoácidos que es reconocida por importinas y determina el transporte de una proteína hacia el núcleo."},
+ {id:"transcripcion", t:"Transcripción", m:["transcribir","transcriba","transcripción"], d:"Síntesis de una molécula de ARN a partir de un molde de ácido nucleico, catalizada por una polimerasa."},
+ {id:"traduccion", t:"Traducción", m:["traducirse","traducen"], d:"Síntesis de una proteína en los ribosomas a partir de la secuencia de un ARNm."},
+ {id:"trimero", t:"Trímero", m:["trímeros"], d:"Complejo formado por tres subunidades proteicas asociadas."},
+ {id:"v-atpasa", t:"V-ATPasa", m:["V-ATPasa"], d:"Bomba de protones de la membrana de endosomas y lisosomas. Hidroliza ATP y transporta H⁺ hacia el interior del compartimiento, lo que lo acidifica."},
+ {id:"virion", t:"Virión", m:["viriones","virión"], d:"Partícula viral completa en el medio extracelular. En influenza está formada por las 8 vRNP, la proteína M1 y una envoltura lipídica con HA, NA y M2."},
+ {id:"vrnp", t:"vRNP", m:["ribonucleoproteínas virales","vRNP"], cs:true, d:"Ribonucleoproteína viral. Complejo formado por un segmento de ARN genómico recubierto por nucleoproteína (NP) y asociado a la ARN polimerasa viral. El virión de influenza contiene 8 vRNP distintas."},
+];
+
+const D = {"1": {"t": "Ciclo de una Infección Viral", "b": "Sos parte de un equipo de investigación que sigue, con microscopía de fluorescencia, el recorrido de un virión de influenza A. El virión llegó a la tráquea en una microgota de saliva. Entre el virión y las células del epitelio respiratorio hay una capa de moco con mucinas ricas en ácido siálico, que el batido de las cilias desplaza de manera continua.\n\nEn cada pantalla, elegí la predicción que mejor explica lo que ocurre a continuación. ¿Qué permite que el virión alcance la superficie de una célula epitelial?", "o": [["El batido de las cilias transporta el moco, y con él al virión, hacia el epitelio.", 2], ["La neuraminidasa viral hidroliza el ácido siálico de las mucinas que retienen al virión.", 3]]}, "2": {"t": "Retenido en el Moco.", "b": "El batido de las cilias desplaza el moco hacia la faringe y no hacia el epitelio (barrido mucociliar). Además, la hemaglutinina (HA) del virión se une al ácido siálico de las mucinas, que compiten con los receptores de la superficie celular por la unión a la HA, y el virión queda retenido. En una persona con inmunidad previa, la IgA secretoria presente en el moco también se une a las glicoproteínas virales y las neutraliza.\n\nEl virión es eliminado junto con el moco y la infección no progresa.", "o": [["Volver a plantear la predicción.", 1]]}, "3": {"t": "Unión al Receptor.", "b": "La neuraminidasa (NA) hidroliza el ácido siálico de las mucinas, lo que libera al virión, que alcanza la membrana apical de una célula del epitelio respiratorio. En la envoltura del virión hay numerosos trímeros de hemaglutinina (HA), y en la membrana celular hay glicoproteínas y glicolípidos con ácido siálico terminal.\n\n¿Cómo ingresa el virión a la célula?", "o": [["La envoltura viral perfora la bicapa lipídica y el virión atraviesa la membrana.", 4], ["La HA se une al ácido siálico de la membrana y esa unión desencadena la endocitosis.", 5]]}, "4": {"t": "La Membrana no se Perfora.", "b": "Los virus carecen de metabolismo propio y de estructuras capaces de perforar una membrana. El ingreso depende de la unión específica entre la HA y los receptores con ácido siálico, y de los mecanismos de endocitosis de la célula hospedadora.\n\nSin esa unión, el virión permanece en el medio extracelular, donde puede ser eliminado por el barrido mucociliar o neutralizado por anticuerpos.", "o": [["Volver a la membrana celular.", 3]]}, "5": {"t": "Endocitosis en Progreso.", "b": "La unión de la HA al ácido siálico desencadena la internalización del virión, principalmente por endocitosis mediada por clatrina y, en menor medida, por macropinocitosis. El virión queda dentro de un endosoma temprano, que madura hacia endosoma tardío. Durante esa maduración, la bomba de protones V-ATPasa de la membrana endosomal acidifica progresivamente su interior.\n\n¿Qué le ocurre al virión a medida que baja el pH?", "o": [["La HA cambia de conformación y la envoltura viral se fusiona con la membrana del endosoma.", 6], ["El pH ácido no modifica al virión, que permanece intacto dentro del endosoma.", 7]]}, "6": {"t": "Liberación del Material Genético.", "b": "A un pH de entre 5 y 6, la HA cambia de conformación, expone su péptido de fusión y la envoltura viral se fusiona con la membrana del endosoma tardío. Al mismo tiempo, los protones ingresan al interior del virión a través del canal iónico M2, y la proteína de matriz M1 se separa de las ribonucleoproteínas virales (vRNP). Así, los 8 segmentos de ARN de polaridad negativa, cada uno asociado a la nucleoproteína (NP) y a la ARN polimerasa viral, quedan libres en el citoplasma.\n\n¿Hacia dónde se desplazan las vRNP?", "o": [["Hacia el núcleo, mediante señales de localización nuclear presentes en la NP.", 8], ["Hacia las mitocondrias, que aportan el ATP necesario para la replicación.", 9]]}, "7": {"t": "Degradación por Lisosomas.", "b": "El pH ácido sí modifica al virión, porque desencadena el cambio de conformación de la HA que conduce a la fusión de membranas. Cuando la fusión no ocurre, por ejemplo si un agente como el cloruro de amonio neutraliza la acidez del endosoma, el endosoma tardío se fusiona con un lisosoma.\n\nLas hidrolasas lisosomales degradan los componentes del virión y la infección no progresa.", "o": [["Volver al endosoma.", 5]]}, "8": {"t": "Transcripción y Replicación.", "b": "Las vRNP ingresan al núcleo a través de los complejos del poro nuclear. Como el genoma es de polaridad negativa, no puede traducirse directamente. La ARN polimerasa viral (PB1, PB2 y PA) escinde el extremo 5' con cap de pre-ARNm de la célula (mecanismo denominado cap-snatching), y ese fragmento actúa como cebador en la transcripción de los ARNm virales, que se exportan al citoplasma y se traducen en los ribosomas. La misma polimerasa sintetiza copias de polaridad positiva (ARNc), que funcionan como molde de nuevos genomas. Las nuevas vRNP salen del núcleo asociadas a las proteínas M1 y NEP.\n\n¿Dónde se ensamblan los nuevos viriones?", "o": [["En la membrana plasmática apical, adonde llegan HA, NA y M2 tras pasar por el RE y el Golgi.", 10], ["Dentro del aparato de Golgi, que incorpora el genoma viral a vesículas de secreción.", 11]]}, "9": {"t": "Sin Ingreso al Núcleo.", "b": "El ATP está disponible en el citosol, por lo que su uso no requiere un desplazamiento hacia las mitocondrias. Además, las vRNP no se dirigen a ningún sitio por sí mismas. Las señales de localización nuclear de la NP son reconocidas por importinas de la célula, que median su transporte hacia el núcleo. En el núcleo se encuentran los pre-ARNm con cap de la célula, indispensables para que la polimerasa viral transcriba el genoma.\n\nFuera del núcleo, la infección no progresa.", "o": [["Volver al citoplasma.", 6]]}, "10": {"t": "Ensamblaje en la Membrana.", "b": "Las glicoproteínas HA, NA y M2 se sintetizan en ribosomas asociados al retículo endoplasmático, se glicosilan en el RE y el aparato de Golgi, y se acumulan en regiones de la membrana plasmática apical. Las vRNP llegan a esas regiones, donde M1 se ubica por debajo de la membrana. En cada partícula en formación se incorpora un conjunto de los 8 segmentos distintos del genoma, y la membrana se curva hasta formar una yema.\n\nTodo el ciclo, desde el ingreso hasta la salida de los primeros viriones, transcurre en el lapso de algunas horas.", "o": [["Continuar hacia la liberación.", 12]]}, "11": {"t": "El Golgi no Ensambla Viriones.", "b": "HA, NA y M2 sí atraviesan el retículo endoplasmático y el aparato de Golgi, donde se glicosilan antes de llegar a la membrana plasmática. Sin embargo, las vRNP no ingresan al sistema de endomembranas, sino que salen del núcleo asociadas a M1 y NEP y se desplazan por el citoplasma hasta la membrana apical.\n\nPor eso el ensamblaje no ocurre en el Golgi, sino en la membrana plasmática. Una partícula sin vRNP no es infecciosa.", "o": [["Revisar el ensamblaje.", 8]]}, "12": {"t": "Gemación y Liberación.", "b": "La proteína M2 participa en la escisión de la yema, y el nuevo virión se separa con una envoltura formada por membrana plasmática de la célula hospedadora. La HA de los viriones recién formados se une al ácido siálico de la superficie celular, y la NA lo hidroliza. Esa hidrólisis produce la liberación de los viriones y reduce su agregación.\n\nA diferencia de lo que ocurre en un ciclo lítico, la célula no estalla. Libera viriones de manera continua durante horas y más tarde muere, entre otros mecanismos por apoptosis. Los viriones liberados pueden infectar células vecinas del epitelio respiratorio.", "o": [["Volver a empezar.", 1]]}};
+const STAGES = [
+  {n:1, name:"Mucosa"}, {n:3, name:"Adsorción"}, {n:5, name:"Endocitosis"},
+  {n:6, name:"Fusión y desnudamiento"}, {n:8, name:"Transcripción y replicación"},
+  {n:10, name:"Ensamblaje"}, {n:12, name:"Gemación y liberación"}
+];
+const FAIL = {2:1, 4:3, 7:5, 9:6, 11:8};   // diapositiva de error -> etapa de la que proviene
+const ALT  = {img:{1:"Virión dentro de una microgota sobre el epitelio ciliado",2:"Virión rodeado de anticuerpos en el moco",3:"Viriones con glicoproteínas de superficie sobre una membrana",4:"Partícula viral deformada junto a una membrana",5:"Virión en contacto con la membrana celular",6:"Segmentos de ribonucleoproteínas en el citoplasma",7:"Vesículas y lisosomas con restos virales",8:"Maquinaria molecular de transcripción y traducción",9:"Mitocondria en el citoplasma",10:"Membrana plasmática con viriones en formación",11:"Cisternas del aparato de Golgi",12:"Viriones liberándose desde la superficie celular"}};
+
+let state = {cur:1, log:[], wrong:[]};
+
+
+const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const GBY = Object.fromEntries(GLOSS.map(g=>[g.id,g]));
+const PATS = GLOSS.flatMap(g=>g.m.map(m=>({g,m}))).sort((a,b)=>b.m.length-a.m.length)
+  .map(({g,m})=>({g, re:new RegExp('(?<![\\p{L}\\d-])('+m.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?![\\p{L}\\d])', g.cs?'u':'iu')}));
+function linkify(text, used){
+  const slots=[]; let s=text;
+  for(const {g,re} of PATS){
+    if(used.has(g.id)) continue;
+    const m = s.match(re); if(!m) continue;
+    used.add(g.id);
+    const i = slots.push(`<button type="button" class="term" data-g="${g.id}" aria-label="${m[1]}, ver en el glosario">${m[1]}</button>`)-1;
+    s = s.slice(0,m.index) + '\u0001'+i+'\u0002' + s.slice(m.index+m[1].length);
+  }
+  return s.replace(/\u0001(\d+)\u0002/g,(_,i)=>slots[+i]);
+}
+const gpanel=document.getElementById('gpanel'), scrim=document.getElementById('scrim'), gsearch=document.getElementById('gsearch');
+let gReturn=null;
+function renderGloss(q, hit){
+  const nq = norm(q||'');
+  const items = GLOSS.slice().sort((a,b)=>a.t.localeCompare(b.t,'es'))
+    .filter(g=>!nq || norm(g.t).includes(nq) || norm(g.d).includes(nq) || g.m.some(m=>norm(m).includes(nq)));
+  document.getElementById('gcount').textContent = `${items.length} ${items.length===1?'término':'términos'}`;
+  document.getElementById('glist').innerHTML = items.length ? items.map(g=>`<li id="g-${g.id}" class="${g.id===hit?'hit':''}"><dl style="margin:0"><dt>${g.t}</dt><dd>${g.d}</dd></dl></li>`).join('')
+    : '<li class="gempty">No hay términos que coincidan con la búsqueda.</li>';
+}
+function openGloss(id){
+  gReturn = document.activeElement;
+  gsearch.value=''; renderGloss('', id);
+  gpanel.hidden=false; scrim.hidden=false;
+  if(id){ const el=document.getElementById('g-'+id); el && el.scrollIntoView({block:'center'}); document.getElementById('gclose').focus(); }
+  else gsearch.focus();
+}
+function closeGloss(){ gpanel.hidden=true; scrim.hidden=true; gReturn && gReturn.focus && gReturn.focus(); }
+document.getElementById('gopen').addEventListener('click',()=>openGloss());
+document.getElementById('gclose').addEventListener('click',closeGloss);
+scrim.addEventListener('click',closeGloss);
+gsearch.addEventListener('input',()=>{ renderGloss(gsearch.value); document.getElementById('glist').scrollTop=0; });
+document.getElementById('content').addEventListener('click',e=>{ const b=e.target.closest('.term'); if(b) openGloss(b.dataset.g); });
+
+function stageIndex(n){ const base = FAIL[n] || n; return STAGES.findIndex(s=>s.n===base); }
+
+function renderTrack(n){
+  const idx = stageIndex(n), bad = !!FAIL[n];
+  document.getElementById('track').innerHTML = STAGES.map((s,i)=>
+    `<li class="${i<idx?'done':''}${i===idx?' now'+(bad?' bad':''):''}">${s.name}</li>`).join('');
+}
+
+function renderLog(){
+  const el = document.getElementById('log');
+  if(!state.log.length){ el.innerHTML = '<li>Todavía no hiciste ninguna predicción.</li>'; return; }
+  el.innerHTML = state.log.map(e=>`<li class="${e.bad?'bad':'ok'}">${e.bad?'✕':'✓'} ${e.stage}</li>`).join('');
+}
+
+function go(n, fromChoice){
+  const node = D[n]; state.cur = n;
+  const bad = !!FAIL[n];
+  const stage = document.getElementById('stage');
+  stage.classList.toggle('flip', [1,3,5,7,8,10,12].includes(n));
+  const img = document.getElementById('pic');
+  img.src = `img/d${String(n).padStart(2,'0')}.jpg`;
+  img.alt = ALT.img[n] || '';
+  const si = stageIndex(n);
+  const eyebrow = bad ? 'Predicción descartada' : `Etapa ${si+1} de ${STAGES.length} · ${STAGES[si].name}`;
+  const paras = node.b.split('\n').filter(Boolean);
+  const used = new Set();
+  const bodyHTML = paras.map((p,i)=>`<p class="${(i===paras.length-1 && p.trim().startsWith('¿'))?'q':''}">${linkify(p,used)}</p>`).join('');
+  let extra = '';
+  if(n===12){
+    const w = state.wrong;
+    extra = `<div class="summary"><strong>Recorrido completo</strong>
+      <span>${w.length===0 ? 'Llegaste al final sin predicciones descartadas.' : `Descartaste ${w.length} ${w.length===1?'predicción':'predicciones'} en el camino.`}</span>
+      ${w.length? '<ul>'+w.map(x=>`<li>${x}</li>`).join('')+'</ul>' : ''}</div>`;
+  }
+  const opts = node.o.map(([label,dest],i)=>{
+    const back = bad || n===12;
+    return `<button class="opt${back?' back':''}" id="opt${i+1}" data-dest="${dest}" data-label="${label.replace(/"/g,'&quot;')}"><span class="k">${i+1}</span><span>${label}</span></button>`;
+  }).join('');
+  const c = document.getElementById('content');
+  c.innerHTML = `<div class="eyebrow${bad?' bad':''}">${eyebrow}</div>
+    <h1 class="${bad?'bad':''}">${node.t}</h1>
+    <div class="body">${bodyHTML}</div>${extra}
+    <div class="opts">${opts}</div>`;
+  stage.classList.remove('fade'); void stage.offsetWidth; stage.classList.add('fade');
+  c.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>choose(+b.dataset.dest,b.dataset.label)));
+  renderTrack(n); renderLog();
+  if(fromChoice){ const f=c.querySelector('.opt'); f && f.focus({preventScroll:true}); stage.scrollIntoView({block:'nearest'}); }
+}
+
+function choose(dest,label){
+  const from = state.cur;
+  if(from===12){ state = {cur:1, log:[], wrong:[]}; go(1,true); return; }
+  if(!FAIL[from]){
+    const s = STAGES[stageIndex(from)].name;
+    const bad = !!FAIL[dest];
+    state.log.push({stage:s, bad});
+    if(bad) state.wrong.push(`${s}: ${label}`);
+  }
+  go(dest,true);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape' && !gpanel.hidden){ closeGloss(); return; }
+  if(!gpanel.hidden) return;
+  if(e.target.closest && e.target.closest('input,textarea')) return;
+  const b = document.getElementById('opt'+e.key);
+  if(b) b.click();
+});
+
+const boot = (data)=>{ if(data && data.cur){ state = data; } go(state.cur,false); };
+window.claude?.hot?.snapshot?.(()=>state);
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+</script>
+
+</body></html>
